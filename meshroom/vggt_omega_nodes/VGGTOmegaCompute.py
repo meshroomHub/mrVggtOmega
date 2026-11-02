@@ -63,7 +63,15 @@ class VGGTOmegaCompute(desc.Node):
             label='Output Directory',
             description="Output",
             value="{nodeCacheFolder}",
-        )
+        ),
+        desc.File(
+            name="depth",
+            label="Depth Maps",
+            description="Generated depth maps.",
+            semantic="image",
+            value="{nodeCacheFolder}/<VIEW_ID>_depthMap.exr",
+            commandLineGroup="",  # do not export on the command line
+        ),
     ]
 
     def processChunk(self, chunk):
@@ -316,8 +324,6 @@ class VGGTOmegaCompute(desc.Node):
 
                 focals.setdefault(v.getIntrinsicId(), []).append((id, fx, fy))
 
-                frameName = pathlib.Path(iinfo["path"]).stem
-
                 top_idx = top
                 bottom_idx = theight - bottom if bottom > 0 else theight
                 left_idx = left
@@ -330,9 +336,9 @@ class VGGTOmegaCompute(desc.Node):
                 image = avimg.Image_float()
                 image.fromNumpyArray(depth)
 
-                outname = str(outputDirectory / ("depth_" + frameName))
+                outname = str(outputDirectory / f"{id}_depthMap.exr")
                 oiio_params = avimg.oiioParams(iinfo["orientation"], iinfo["pixelAspectRatio"], iinfo["compression"])
-                avimg.writeImage(outname + ".exr", image, optWrite, oiio_params.get())
+                avimg.writeImage(outname, image, optWrite, oiio_params.get())
 
             # Create the new pinhole intrinsics
             intrinsics.clear()
